@@ -5,30 +5,37 @@ from CLexer import CLexer
 from CParser import CParser
 from CVisitor import CVisitor
 
-def addIndentation(a, num=2):
-    return '\n'.join([' ' * num + i for i in a.split('\n')])
 
 class ToPYVisitor(CVisitor):
-    def visitCompilationUnit(self, ctx): # 主函数入口
-        ans = [self.visit(i) for i in ctx.children[:-1]]
+    def __init__(self):
+        self.indent = 0
+
+    def addIndentation(self, ans):
+        self.indent -= 1
+        print(self.indent)
+        return '\n'.join(['\t' + i for i in ans.split('\n')])
+
+    def visitCompilationUnit(self, ctx):  # 主函数入口
+        ans = [self.visit(i) for i in ctx.children]
         ans = [x for x in ans if x]
-        return '\n'.join(ans) + '\n\nif __name__ == \'__main__\': \n    main()\n'
+        return '\n'.join(ans) + '\n\nif __name__ == \'__main__\': \n\tmain()\n'
 
-    def visitFunctionDefinition(self, ctx): # 函数定义
-        ans = 'def'
-        ans += ' ' + self.visit(ctx.declarator()) + ':'
-        ans += ' ' + self.visit(ctx.compoundStatement())
-        return ans
+    def visitFunctionDefinition(self, ctx):  # 函数定义
+        function_defination = 'def'
+        self.indent += 1
+        function_defination += ' ' + self.visit(ctx.declarator()) + ':\n'
+        ans = '\n'.join([self.visit(i) for i in ctx.compoundStatement().blockItem()])
+        return function_defination + self.addIndentation(ans)
 
-    def visitTypeSpecifier(self, ctx): # 变量类型
+    def visitTypeSpecifier(self, ctx):  # 变量类型
         if ctx.CONST():
             return 'const'
-        return 'let'
+        return ''
 
-    def visitPureIdentifier(self, ctx:CParser.PureIdentifierContext): # 变量名
+    def visitPureIdentifier(self, ctx: CParser.PureIdentifierContext):  # 变量名
         return ctx.Identifier().getText()
 
-    def visitArrayIdentifier(self, ctx:CParser.ArrayIdentifierContext): # 数组/字符串声明
+    def visitArrayIdentifier(self, ctx: CParser.ArrayIdentifierContext):  # 数组/字符串声明
         if ctx.assignmentExpression():
             # array definition
             # length = self.visit(ctx.assignmentExpression())
@@ -37,18 +44,22 @@ class ToPYVisitor(CVisitor):
             # string definition
             return f'{ctx.Identifier().getText()}'
 
-    def visitFunctionDefinitionOrDeclaration(self, ctx:CParser.FunctionDefinitionOrDeclarationContext): # 函数名及参数
+    def visitFunctionDefinitionOrDeclaration(self, ctx: CParser.FunctionDefinitionOrDeclarationContext):  # 函数名及参数
         if ctx.parameterTypeList():
             return f'{ctx.Identifier().getText()}({self.visit(ctx.parameterTypeList())})'
         return f'{ctx.Identifier().getText()}()'
 
-    def visitDeclaration(self, ctx): # 声明
-        if isinstance(ctx.initDeclaratorList().initDeclarator(0).declarator(), CParser.FunctionDefinitionOrDeclarationContext):
+    def visitDeclaration(self, ctx):  # 声明
+        if isinstance(ctx.initDeclaratorList().initDeclarator(0).declarator(),
+                      CParser.FunctionDefinitionOrDeclarationContext):
             # there is no function declaration in JS
             return
         return self.visit(ctx.initDeclaratorList())
+    #
+    # def visitJumpStatement(self, ctx):
+    #     return self.visitArrayIdentifier(ctx)
 
-    def visitAssignmentExpression(self, ctx:CParser.AssignmentExpressionContext):
+    def visitAssignmentExpression(self, ctx: CParser.AssignmentExpressionContext):
         if ctx.logicalAndExpression():
             return self.visit(ctx.logicalAndExpression())
         if ctx.logicalOrExpression():
@@ -56,19 +67,19 @@ class ToPYVisitor(CVisitor):
         else:
             return self.visit(ctx.unaryExpression()) + ' = ' + self.visit(ctx.assignmentExpression())
 
-    def visitLogicalAndExpression(self, ctx:CParser.LogicalAndExpressionContext):
+    def visitLogicalAndExpression(self, ctx: CParser.LogicalAndExpressionContext):
         if ctx.logicalAndExpression():
             return self.visit(ctx.logicalAndExpression()) + ' and ' + self.visit(ctx.equalityExpression())
         else:
             return self.visit(ctx.equalityExpression())
 
-    def visitLogicalOrExpression(self, ctx:CParser.LogicalOrExpressionContext):
+    def visitLogicalOrExpression(self, ctx: CParser.LogicalOrExpressionContext):
         if ctx.logicalOrExpression():
             return self.visit(ctx.logicalOrExpression()) + ' or ' + self.visit(ctx.equalityExpression())
         else:
             return self.visit(ctx.equalityExpression())
 
-    def visitEqualityExpression(self, ctx:CParser.EqualityExpressionContext):
+    def visitEqualityExpression(self, ctx: CParser.EqualityExpressionContext):
         if len(ctx.children) == 1:
             return self.visit(ctx.relationalExpression())
         else:
@@ -76,25 +87,26 @@ class ToPYVisitor(CVisitor):
             return self.visit(ctx.equalityExpression()) + f' {op} ' + \
                    self.visit(ctx.relationalExpression())
 
-    def visitRelationalExpression(self, ctx:CParser.RelationalExpressionContext):
+    def visitRelationalExpression(self, ctx: CParser.RelationalExpressionContext):
         if len(ctx.children) > 1:
-            return self.visit(ctx.castExpression(0)) + ' ' + ctx.children[1].getText() + ' ' + self.visit(ctx.castExpression(1))
+            return self.visit(ctx.castExpression(0)) + ' ' + ctx.children[1].getText() + ' ' + self.visit(
+                ctx.castExpression(1))
         else:
             return self.visit(ctx.castExpression(0))
 
-    def visitCastExpression(self, ctx:CParser.CastExpressionContext):
+    def visitCastExpression(self, ctx: CParser.CastExpressionContext):
         if ctx.unaryExpression():
             return self.visit(ctx.unaryExpression())
         else:
             return ' '.join([self.visit(x) for x in ctx.children])
 
-    def visitUnaryExpression(self, ctx:CParser.UnaryExpressionContext):
+    def visitUnaryExpression(self, ctx: CParser.UnaryExpressionContext):
         if len(ctx.children) > 1:
             return ctx.children[0].getText() + ' ' + self.visit(ctx.postfixExpression())
         else:
             return self.visit(ctx.postfixExpression())
 
-    def visitPostfixExpression(self, ctx:CParser.PostfixExpressionContext):
+    def visitPostfixExpression(self, ctx: CParser.PostfixExpressionContext):
         if ctx.primaryExpression():
             return self.visit(ctx.primaryExpression())
         if ctx.children[1].getText() == '[':
@@ -111,19 +123,20 @@ class ToPYVisitor(CVisitor):
             # printf doesn't append a newline but console
             if args[0].endswith('\\n\"'):
                 args[0] = args[0][:-3] + '"'
-            return 'print(' + args[0] + ')' 
+            return 'print(' + args[0] + ')'
         if ctx.expression():
             return f'{ctx.postfixExpression().getText()}({self.visit(ctx.expression())})'
         return f'{ctx.postfixExpression().getText()}()'
 
-    def visitPrimaryExpression(self, ctx:CParser.PrimaryExpressionContext):
+    def visitPrimaryExpression(self, ctx: CParser.PrimaryExpressionContext):
         return ctx.children[0].getText()
 
-    def visitExpression(self, ctx:CParser.ExpressionContext):
+    def visitExpression(self, ctx: CParser.ExpressionContext):
         return ', '.join([self.visit(x) for x in ctx.assignmentExpression()])
 
     def visitCompoundStatement(self, ctx):
-        return '\n{\n' + addIndentation('\n'.join([self.visit(i) for i in ctx.children[1:-1]])) + '\n}'
+        self.indent += 1
+        return '\n' + self.addIndentation('\n'.join([self.visit(i) for i in ctx.children[1:-1]])) + '\n}'
 
     def visitBlockItem(self, ctx):
         if ctx.statement():
@@ -152,13 +165,15 @@ class ToPYVisitor(CVisitor):
             return self.visit(ctx.children[0])
         txt = ctx.children[0].getText()
         if txt == 'if':
-            if_statements = f'if({self.visit(ctx.expression())}): ' + self.visit(ctx.statement(0))
+            if_statements = f'if {self.visit(ctx.expression())}: ' + self.visit(ctx.statement(0))
             else_statement = ''
             if len(ctx.children) > 5:
                 else_statement = '\nelse' + self.visit(ctx.statement(1))
             return if_statements + else_statement
         if txt == 'while':
-            return f'while({self.visit(ctx.expression())}): ' + self.visit(ctx.statement(0))
+            ans = f'while {self.visit(ctx.expression())}:\n'
+            self.indent += 1
+            return ans + self.addIndentation('\n'.join([self.visit(i) for i in ctx.statement(0).compoundStatement().blockItem()]))
         if txt == 'for':
             forDeclaration = ctx.forDeclaration()
             forDeclaration = '' if not forDeclaration else self.visit(forDeclaration)
@@ -166,7 +181,10 @@ class ToPYVisitor(CVisitor):
             forExpression_0 = '' if not forExpression_0 else self.visit(forExpression_0)
             forExpression_1 = ctx.forExpression(1)
             forExpression_1 = '' if not forExpression_1 else self.visit(forExpression_1)
-            return f'for ({forDeclaration}; {forExpression_0}; {forExpression_1}): ' + self.visit(ctx.statement(0))
+            ans = f'{forDeclaration}' + '\n' + f'while {forExpression_0}:\n'
+            self.indent += 1
+            return ans + self.addIndentation(f'\n'.join([self.visit(i) for i in ctx.statement(0).compoundStatement().blockItem()])
+                                       + f'\n{forExpression_1}')
         if txt == 'return':
             expression = ''
             if ctx.expression():
@@ -174,7 +192,7 @@ class ToPYVisitor(CVisitor):
             return f'return {expression}'
         return ctx.getText()
 
-    def visitForDeclaration(self, ctx:CParser.ForDeclarationContext):
+    def visitForDeclaration(self, ctx: CParser.ForDeclarationContext):
         return self.visit(ctx.typeSpecifier()) + ' ' + self.visit(ctx.initDeclaratorList())
 
     def visitTerminal(self, node):
@@ -195,17 +213,19 @@ class ToPYVisitor(CVisitor):
     def visitParameterDeclaration2(self, ctx: CParser.ParameterDeclarationContext):
         return self.visit(ctx.declarator())
 
-def main(argv):
-    input = FileStream('test.cpp' if len(argv) <= 1 else argv[1])
-    lexer = CLexer(input)
-    stream = CommonTokenStream(lexer)
-    parser = CParser(stream)
-    tree = parser.compilationUnit()
-    ans = ToPYVisitor().visit(tree)
-    outfile = open('test.py' if len(argv) <= 2 else argv[2], 'w', encoding='utf-8')
-    outfile.write(ans)
-    outfile.close()
-    # print(ans)
- 
-if __name__ == '__main__':
-    main(sys.argv)
+
+# def main(argv):
+#     input = FileStream('testKMP.c' if len(argv) <= 1 else argv[1])
+#     lexer = CLexer(input)
+#     stream = CommonTokenStream(lexer)
+#     parser = CParser(stream)
+#     tree = parser.compilationUnit()
+#     ans = ToPYVisitor().visit(tree)
+#     outfile = open('test.py' if len(argv) <= 2 else argv[2], 'w', encoding='utf-8')
+#     outfile.write(ans)
+#     outfile.close()
+#     # print(ans)
+#
+#
+# if __name__ == '__main__':
+#     main(sys.argv)
