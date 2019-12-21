@@ -15,7 +15,6 @@ void computeNext()
             ++index_t;
             ++index_moving;
             next[index_moving] = index_t;
-            continue;
         }
         if(index_moving == length_t)
         {
