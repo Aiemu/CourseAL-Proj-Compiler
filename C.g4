@@ -41,8 +41,6 @@ postfixExpression
     :   primaryExpression
     |   postfixExpression '[' expression ']'
     |   postfixExpression '(' argumentExpressionList? ')'
-    |   postfixExpression '.' Identifier
-    |   postfixExpression '->' Identifier
     |   postfixExpression '++'
     |   postfixExpression '--'
     |   '(' typeName ')' '{' initializerList '}'
@@ -187,7 +185,7 @@ typeSpecifier
     ;
 
 typeName
-    :   ('int' | 'float')
+    :   ('int' |'float')
     ;
 
 enumSpecifier

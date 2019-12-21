@@ -1,6 +1,6 @@
 s = "abcdefgabdef"
 t = "ab"
-next = [0 * 1000]
+next = [0] * 1000
 def computeNext():
 	length_t = len(t)
 	index_t = 0
@@ -11,6 +11,7 @@ def computeNext():
 			index_t += 1
 			index_moving += 1
 			next[index_moving]=index_t
+			continue
 		if index_moving == length_t: 
 			next[index_moving]=index_t
 			break
@@ -26,7 +27,7 @@ def main():
 	length_t = len(t)
 	if length_t == 0: 
 		print("empty template string!\n")
-		return 0
+		return
 	index_t = 0
 	index_s = 0
 	while index_s<length_s:
