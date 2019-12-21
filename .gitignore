@@ -1,8 +1,12 @@
 __pycache__/
 gen/
+.idea/
+.DC_Store
+.antlr
 test.c
-c.interp
-c.tokens
+C.interp
+C.tokens
+CParser.py
 CLexer.*
 CtoPY.py
 test.py
