@@ -11,58 +11,66 @@ class PYVisitor(CVisitor):
         super().__init__()
         self.indent = 0
 
-    def addIndent(self, resultList):
+    def addIndent(self, result):
         if self.indent < 0:
             raise SyntaxError('indent error')
-        print(resultList)
-        return '\n'.join('\t' + i for i in resultList)
+        print(result)
+        return '\n'.join('\t' + i for i in result.split('\n'))
 
     def visitPrimaryExpression(self, ctx: CParser.PrimaryExpressionContext):
         if ctx.expression():
-            return '(' + self.visit(ctx.Constant()) + ')'
-        else:
-            return ctx.getChild(0).getText()
+            return '(' + self.visit(ctx.expression()) + ')'
+        elif ctx.Constant():
+            print('primary:', ctx.Constant().getText())
+            return ctx.Constant().getText()
+        elif ctx.StringLiteral():
+            return ''.join(i.getText() for i in ctx.StringLiteral())
+        elif ctx.Identifier():
+            return ctx.Identifier().getText()
 
     def visitPostfixExpression(self, ctx: CParser.PostfixExpressionContext):
         if ctx.primaryExpression():
+            print("postfix expression")
             return self.visit(ctx.primaryExpression())
         if ctx.postfixExpression():
             if ctx.children[1].getText() == '[':
-                pass
+                return self.visit(ctx.postfixExpression()) + '[' + self.visit(ctx.expression()) + ']'
             elif ctx.children[1].getText() == '(':
                 function = ctx.postfixExpression().getText()
                 if function == 'strlen':
                     function = 'len'
-                    return function + '(' + self.visit(ctx.argumentExpressionList()) + ')'
+                    return function + '(' + ', '.join(self.visit(ctx.argumentExpressionList())) + ')'
                 elif function == 'printf':
                     args = self.visit(ctx.argumentExpressionList())
-                    print(args)
-                    return function + '(' + ',% '.join(args) + ')'
+                    print('args', type(args), ' ', args)
+                    return 'print(' + ' % '.join(['(%s)' % i if args.index(i) != 0 else i for i in args ]) + ')'
+                else:
+                    return function + '(' + ')'
             elif ctx.children[1].getText() == '++':
                 pass
 
     def visitArgumentExpressionList(self, ctx: CParser.ArgumentExpressionListContext):
-        if ctx.assignmentExpression():
-            return [self.visit(ctx.assignmentExpression())]
+        if ctx.argumentExpressionList():
+            return self.visit(ctx.argumentExpressionList()) + [self.visit(ctx.assignmentExpression())]
         else:
-            return self.visit(ctx.argumentExpressionList().argumentExpressionList()) + [
-                self.visit(ctx.assignmentExpression())]
+            return [self.visit(ctx.assignmentExpression())]
 
     def visitUnaryExpression(self, ctx: CParser.UnaryExpressionContext):
         if ctx.unaryOperator():
             return self.visit(ctx.unaryOperator()) + self.visit(ctx.castExpression())
-        elif ctx.getChild(0).getText() == '++':
-            return self.visit(ctx.unaryOperator()) + '+= 1'
+        elif ctx.PlusPlus():
+            return self.visit(ctx.unaryExpression()) + ' += 1'
         elif ctx.getChild(0).getText() == '--':
-            return self.visit(ctx.unaryOperator()) + '-= 1'
+            return self.visit(ctx.unaryExpression()) + ' -= 1'
         elif ctx.postfixExpression():
             return self.visit(ctx.postfixExpression())
 
     def visitUnaryOperator(self, ctx: CParser.UnaryOperatorContext):
-        pass
+        return ctx.getText()
 
     def visitCastExpression(self, ctx: CParser.CastExpressionContext):
         if ctx.unaryExpression():
+            print('cast expression:')
             return self.visit(ctx.unaryExpression())
         elif ctx.typeName():
             if ctx.typeName().getText() == 'int' or ctx.typeName().getText() == 'float':
@@ -77,6 +85,7 @@ class PYVisitor(CVisitor):
             return self.visit(ctx.multiplicativeExpression()) + ctx.getChild(1).getText() + self.visit(
                 ctx.castExpression())
         else:
+            print('multiple expression:')
             return self.visit(ctx.castExpression())
 
     def visitAdditiveExpression(self, ctx: CParser.AdditiveExpressionContext):
@@ -97,7 +106,7 @@ class PYVisitor(CVisitor):
             return self.visit(ctx.relationalExpression()) + ctx.getChild(1).getText() + self.visit(
                 ctx.shiftExpression())
         else:
-            self.visit(ctx.shiftExpression())
+            return self.visit(ctx.shiftExpression())
 
     def visitEqualityExpression(self, ctx: CParser.EqualityExpressionContext):
         if ctx.equalityExpression():
@@ -108,47 +117,66 @@ class PYVisitor(CVisitor):
             else:
                 raise SyntaxError("equality expresssion error")
         else:
-            self.visit(ctx.relationalExpression())
+            result = self.visit(ctx.relationalExpression())
+            print('equality:', result)
+            return result
 
     def visitAndExpression(self, ctx: CParser.AndExpressionContext):
         if ctx.andExpression():
             return self.visit(ctx.andExpression()) + ' & ' + self.visit(ctx.equalityExpression())
         else:
-            return self.visit(ctx.equalityExpression())
+            result =self.visit(ctx.equalityExpression())
+            print('and:', result)
+            return result
 
     def visitExclusiveOrExpression(self, ctx: CParser.ExclusiveOrExpressionContext):
         if ctx.exclusiveOrExpression():
             return self.visit(ctx.exclusiveOrExpression()) + ' ^ ' + self.visit(ctx.andExpression())
         else:
-            return self.visit(ctx.andExpression())
+            result = self.visit(ctx.andExpression())
+            print('exclusive or:', result)
+            return result
 
     def visitInclusiveOrExpression(self, ctx: CParser.InclusiveOrExpressionContext):
         if ctx.inclusiveOrExpression():
             return self.visit(ctx.inclusiveOrExpression()) + ' | ' + self.visit(ctx.exclusiveOrExpression())
         else:
-            return self.visit(ctx.exclusiveOrExpression())
+            result = self.visit(ctx.exclusiveOrExpression())
+            print('inclusive or:', result)
+            return result
 
     def visitLogicalAndExpression(self, ctx: CParser.LogicalAndExpressionContext):
         if ctx.logicalAndExpression():
             return self.visit(ctx.logicalAndExpression()) + ' and ' + self.visit(ctx.inclusiveOrExpression())
         else:
-            return self.visit(ctx.inclusiveOrExpression())
+            result = self.visit(ctx.inclusiveOrExpression())
+            print('logical and:', result)
+            return result
 
     def visitLogicalOrExpression(self, ctx: CParser.LogicalOrExpressionContext):
         if ctx.logicalOrExpression():
             return self.visit(ctx.logicalOrExpression()) + ' or ' + self.visit(ctx.logicalAndExpression())
         else:
-            return self.visit(ctx.logicalAndExpression())
+            result =self.visit(ctx.logicalAndExpression())
+            print('logical or:', result)
+            return result
 
     def visitConditionalExpression(self, ctx: CParser.ConditionalExpressionContext):
-        return self.visitChildren(ctx)
+        if ctx.expression():
+            return self.visit(ctx.logicalOrExpression()) + self.visit(ctx.expression()) + self.visit(ctx.conditionalExpression())
+        else:
+            result = self.visit(ctx.logicalOrExpression())
+            print('conditional expression:', result)
+            return result
 
     def visitAssignmentExpression(self, ctx: CParser.AssignmentExpressionContext):
         if ctx.unaryExpression():
             return self.visit(ctx.unaryExpression()) + self.visit(ctx.assignmentOperator()) \
                    + self.visit(ctx.assignmentExpression())
         else:
-            return self.visit(ctx.conditionalExpression())
+            result = self.visit(ctx.conditionalExpression())
+            print('assignment expression:', result)
+            return result
 
     def visitAssignmentOperator(self, ctx: CParser.AssignmentOperatorContext):
         return ctx.getText()
@@ -156,7 +184,9 @@ class PYVisitor(CVisitor):
     def visitExpression(self, ctx: CParser.ExpressionContext):
         if ctx.expression():
             return self.visit(ctx.expression()) + self.visit(ctx.assignmentExpression())
-        return self.visit(ctx.assignmentExpression())
+        result = self.visit(ctx.assignmentExpression())
+        print('expression:', result)
+        return result
 
     def visitConstantExpression(self, ctx: CParser.ConstantExpressionContext):
         if ctx.conditionalExpression():
@@ -164,12 +194,8 @@ class PYVisitor(CVisitor):
         raise SyntaxError('constant expression error')
 
     def visitDeclaration(self, ctx: CParser.DeclarationContext):
-        if isinstance(ctx.initDeclaratorList().initDeclarator(0).declarator(),
-                      CParser.FunctionDefinitionOrDeclarationContext):
-            # there is no function declaration in JS
-            return ''
         if ctx.typeSpecifier():
-            return self.visit(ctx.typeSpecifier()) + ' ' + self.visit(ctx.initDeclaratorList()) + ';'
+            return self.visit(ctx.typeSpecifier()) + self.visit(ctx.initDeclaratorList())
 
     def visitInitDeclaratorList(self, ctx: CParser.InitDeclaratorListContext):
         if ctx.initDeclaratorList():
@@ -179,12 +205,16 @@ class PYVisitor(CVisitor):
     def visitInitDeclarator(self, ctx: CParser.InitDeclaratorContext):
         if ctx.initializer():
             print(self.visit(ctx.initializer()))
-            return self.visit(ctx.declarator()) + ' = ' + self.visit(ctx.initializer())
+            return self.visit(ctx.declarator().getChild(0)) + ' = ' + self.visit(ctx.initializer())
         else:
-            return self.visit(ctx.declarator())
+            # 数组定义 其余定义若无初始值可以省略
+            if ctx.declarator().getText()[-1] == ']':
+                return self.visit(ctx.declarator().getChild(0)) + ' = []'
+            else:
+                return ''
 
     def visitTypeSpecifier(self, ctx: CParser.TypeSpecifierContext):
-        return 'def'
+        return ''
 
     def visitEnumSpecifier(self, ctx: CParser.EnumSpecifierContext):
         return self.visitChildren(ctx)
@@ -212,12 +242,12 @@ class PYVisitor(CVisitor):
 
     def visitParameterDeclaration(self, ctx: CParser.ParameterDeclarationContext):
         if ctx.typeSpecifier() and ctx.declarator():
-            return self.visit(ctx.typeSpecifier()) + self.visit(ctx.declarator())
+            return self.visit(ctx.typeSpecifier()) + ''.join([self.visit(i) for i in ctx.declarator().children])
         else:
             raise SyntaxError('parameter declaration error')
 
     def visitParameterDeclaration2(self, ctx: CParser.ParameterDeclarationContext):
-        return self.visit(ctx.declarator())
+        return ''.join([self.visit(i) for i in ctx.declarator().children])
 
     def visitTypeName(self, ctx: CParser.TypeNameContext):
         return ctx.getText()
@@ -241,12 +271,13 @@ class PYVisitor(CVisitor):
             return self.visit(ctx.selectionStatement())
         elif ctx.iterationStatement():
             return self.visit(ctx.iterationStatement())
-        elif ctx.expression():
+        elif ctx.expression() and len(ctx.children) < 3:
             return self.visit(ctx.expression())
         else:
             if ctx.getChild(0).getText() == 'return':
                 if ctx.expression():
-                    return 'return' + self.visit(ctx.expression())
+                    print('return')
+                    return 'return ' + self.visit(ctx.expression())
                 else:
                     return 'return'
             else:
@@ -258,7 +289,7 @@ class PYVisitor(CVisitor):
 
     def visitCompoundStatement(self, ctx: CParser.CompoundStatementContext):
         self.indent += 1
-        return '\n' + self.addIndent([self.visit(i) for i in ctx.children[1:-1]])
+        return '\n' + self.addIndent('\n'.join([self.visit(i) for i in ctx.children[1:-1]]))
 
     def visitBlockItem(self, ctx: CParser.BlockItemContext):
         if ctx.statement():
@@ -269,12 +300,12 @@ class PYVisitor(CVisitor):
         if ctx.children[0].getText() == 'if':
             self.indent += 1
             if_statements = f'if {self.visit(ctx.expression())}: \n' +\
-                            self.addIndent([self.visit(i) for i in ctx.statement(0).compoundStatement().blockItem()])
+                            self.addIndent('\n'.join([self.visit(i) for i in ctx.statement(0).compoundStatement().blockItem()]))
             else_statement = ''
-            if len(ctx.children) >= 5:
+            if len(ctx.children) > 5:
                 self.indent += 1
                 else_statement = '\nelse:\n' + \
-                                 self.addIndent([self.visit(i) for i in ctx.statement(1).compoundStatement().blockItem()])
+                                 self.addIndent('\n'.join([self.visit(i) for i in ctx.statement(1).compoundStatement().blockItem()]))
             return if_statements + else_statement
 
     def visitIterationStatement(self, ctx: CParser.IterationStatementContext):
@@ -285,19 +316,19 @@ class PYVisitor(CVisitor):
             forExpression_0 = '' if not forExpression_0 else self.visit(forExpression_0)
             forExpression_1 = ctx.forExpression(1)
             forExpression_1 = '' if not forExpression_1 else self.visit(forExpression_1)
-            ans = f'{forDeclaration}' + '\n' + f'while {forExpression_0}:\n'
+            print('fordeclartion' + f'{forDeclaration}')
+            ans = forDeclaration + '\n' + f'while {forExpression_0}:\n'
             self.indent += 1
-            return ans + self.addIndent(
-                f'\n'.join([self.visit(i) for i in ctx.statement().compoundStatement().blockItem()])
-                + f'\n{forExpression_1}')
-        elif ctx.getChild(0).getText() == 'While':
+            return ans + self.addIndent('\n'.join(
+                [self.visit(i) for i in ctx.statement().compoundStatement().blockItem()] + [forExpression_1]))
+        elif ctx.getChild(0).getText() == 'while':
             ans = f'while {self.visit(ctx.expression())}:\n'
             self.indent += 1
             return ans + self.addIndent(
                 '\n'.join([self.visit(i) for i in ctx.statement().compoundStatement().blockItem()]))
 
     def visitForDeclaration(self, ctx: CParser.ForDeclarationContext):
-        return self.visit(ctx.typeSpecifier()) + ' ' + self.visit(ctx.initDeclaratorList())
+        return self.visit(ctx.typeSpecifier()) + self.visit(ctx.initDeclaratorList())
 
     def visitForExpression(self, ctx: CParser.ForExpressionContext):
         if ctx.forExpression():
@@ -306,18 +337,21 @@ class PYVisitor(CVisitor):
             return self.visit(ctx.assignmentExpression())
 
     def visitCompilationUnit(self, ctx: CParser.CompilationUnitContext):
-        ans = [self.visit(i) for i in ctx.children]
+        ans = [self.visit(i) for i in ctx.children[:-1]]
         ans = [x for x in ans if x]
         return '\n'.join(ans) + '\n\nif __name__ == \'__main__\': \n\tmain()\n'
 
     def visitFunctionDefinition(self, ctx: CParser.FunctionDefinitionContext):
-        function_defination = self.visit(ctx.typeSpecifier())
+        function_defination = 'def '
         self.indent += 1
         if ctx.declarator():
-            function_defination += ' ' + self.visit(ctx.declarator()) + ':\n'
-        ans = [self.visit(i) for i in ctx.compoundStatement().blockItem()]
+            function_defination += ''.join([self.visit(i) for i in ctx.declarator().children]) + ':\n'
+        ans = '\n'.join([self.visit(i) for i in ctx.compoundStatement().blockItem()])
+        print('ans:', ans)
         return function_defination + self.addIndent(ans)
 
+    def visitTerminal(self, node):
+        return node.getText()
 
 def main(argv):
     input = FileStream('testKMP.c' if len(argv) <= 1 else argv[1])
