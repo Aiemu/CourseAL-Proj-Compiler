@@ -1,4 +1,8 @@
 __pycache__/
 gen/
 test.c
-
+c.interp
+c.tokens
+CLexer.*
+CtoPY.py
+test.py
