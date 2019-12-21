@@ -1,7 +1,7 @@
 __pycache__/
 gen/
 .idea/
-.DC_Store
+.DS_Store
 .antlr
 test.c
 C.interp
