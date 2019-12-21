@@ -1,5 +1,7 @@
 import sys
 from antlr4 import *
+from os import listdir
+from os.path import isfile, join
 
 from CLexer import CLexer
 from CParser import CParser
@@ -379,18 +381,20 @@ class PYVisitor(CVisitor):
     def visitTerminal(self, node):
         return node.getText()
 
-def main(argv):
-    input = FileStream('testKMP.c' if len(argv) <= 1 else argv[1])
-    lexer = CLexer(input)
-    stream = CommonTokenStream(lexer)
-    parser = CParser(stream)
-    tree = parser.compilationUnit()
-    ans = PYVisitor().visit(tree)
-    outfile = open('test.py' if len(argv) <= 2 else argv[2], 'w', encoding='utf-8')
-    outfile.write(ans)
-    outfile.close()
-    # print(ans)
+
+def main():
+    files = [join('./testFiles', f) for f in listdir('./testFiles') if isfile(join('./testFiles', f))]
+    for file in files:
+        lexer = CLexer(FileStream(file))
+        stream = CommonTokenStream(lexer)
+        parser = CParser(stream)
+        tree = parser.compilationUnit()
+        ans = PYVisitor().visit(tree)
+
+        with open('./output/' + file.split('/')[-1].split('.')[0] + '.py', 'w') as output:
+            output.write(ans)
+            output.close()
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()
