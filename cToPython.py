@@ -14,7 +14,7 @@ class PYVisitor(CVisitor):
     def __init__(self):
         super().__init__()
         self.indent = 0
-        self.inState = INIT
+        self.inState = []
         self.forIndent = -1
         self.forExpression = []
 
@@ -291,7 +291,7 @@ class PYVisitor(CVisitor):
                 else:
                     return 'return'
             elif ctx.Continue():
-                if self.forIndent > -1 and self.inState == FOR:
+                if self.forIndent > -1 and self.inState[-1] == FOR:
                     if self.forExpression[self.forIndent]:
                         return self.forExpression[self.forIndent] + '\n' + ctx.Continue().getText()
                     else:
@@ -334,9 +334,8 @@ class PYVisitor(CVisitor):
             forExpression_0 = '' if not forExpression_0 else self.visit(forExpression_0)
             forExpression_1 = ctx.forExpression(1)
             forExpression_1 = '' if not forExpression_1 else self.visit(forExpression_1)
-            # print('fordeclartion' + f'{forDeclaration}')
             ans = forDeclaration + '\n' + f'while {forExpression_0}:\n'
-            self.inState = FOR
+            self.inState.append(FOR)
             self.forIndent += 1
             self.forExpression.append(forExpression_1)
             self.indent += 1
@@ -344,15 +343,15 @@ class PYVisitor(CVisitor):
                 [self.visit(i) for i in ctx.statement().compoundStatement().blockItem()] + [forExpression_1]))
             self.forIndent -= 1
             self.forExpression.pop()
-            self.inState = INIT
+            self.inState.pop()
             return ans
         elif ctx.getChild(0).getText() == 'while':
-            self.inState = WHILE
+            self.inState.append(WHILE)
             ans = f'while {self.visit(ctx.expression())}:\n'
             self.indent += 1
             ans += self.addIndent(
                 '\n'.join([self.visit(i) for i in ctx.statement().compoundStatement().blockItem()]))
-            self.inState = INIT
+            self.inState.pop()
             return ans
 
     def visitForDeclaration(self, ctx: CParser.ForDeclarationContext):
