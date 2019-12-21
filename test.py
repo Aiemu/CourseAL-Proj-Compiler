@@ -1,6 +1,8 @@
 s = "abcdefgabdef"
 t = "ab"
 next = [0] * 1000
+
+
 def computeNext():
 	length_t = len(t)
 	index_t = 0
@@ -22,6 +24,8 @@ def computeNext():
 			index_moving += 1
 			continue
 		index_moving += 1
+
+
 def main():
 	computeNext()
 	length_s = len(s)

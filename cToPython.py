@@ -374,8 +374,7 @@ class PYVisitor(CVisitor):
         if ctx.declarator():
             function_defination += ''.join([self.visit(i) for i in ctx.declarator().children]) + ':\n'
         ans = '\n'.join([self.visit(i) for i in ctx.compoundStatement().blockItem()])
-        # print('ans:', ans)
-        return function_defination + self.addIndent(ans)
+        return '\n\n' + function_defination + self.addIndent(ans)
 
     def visitTerminal(self, node):
         return node.getText()
