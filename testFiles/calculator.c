@@ -1,33 +1,18 @@
-int stackData[5000 * 2];
+int stackData[1000 * 2];
 int stackNo[1];
 int initStack() {
-    if (stackNo[0] >= 2) {
-        return 666;
-    }
-    if (stackNo[0] < 0) {
-        return 666;
-    }
     int ans = stackNo[0];
     stackNo[0] = stackNo[0] + 1;
-    stackData[5000 * ans] = 0;
+    stackData[1000 * ans] = 0;
     return ans;
 }
 void push(int stack, int tar) {
-    if (stack >= 2) {
+    int length = stackData[stack * 1000];
+    if (stack >= 2 || stack < 0) {
         return;
     }
-    if (stack < 0) {
-        return;
-    }
-    int length = stackData[stack * 5000];
-    if (length < 0) {
-        return;
-    }
-    if (length >= 4999) {
-        return;
-    }
-    stackData[stack * 5000 + length + 1] = tar;
-    stackData[stack * 5000] = length + 1;
+    stackData[stack * 1000 + length + 1] = tar;
+    stackData[stack * 1000] = length + 1;
 }
 int pop(int stack) {
     if (stack >= 2) {
@@ -36,12 +21,12 @@ int pop(int stack) {
     if (stack < 0) {
         return 0;
     }
-    int length = stackData[stack * 5000];
+    int length = stackData[stack * 1000];
     if (length <= 0) {
         return 0;
     }
-    stackData[stack * 5000] = length - 1;
-    return stackData[stack * 5000 + length];
+    stackData[stack * 1000] = length - 1;
+    return stackData[stack * 1000 + length];
 }
 int stackEmpty(int stack) {
     if (stack >= 2) {
@@ -50,7 +35,7 @@ int stackEmpty(int stack) {
     if (stack < 0) {
         return 1;
     }
-    int length = stackData[stack * 5000];
+    int length = stackData[stack * 1000];
     if (length == 0) {
         return 1;
     }
@@ -63,11 +48,11 @@ int getTop(int stack) {
     if (stack < 0) {
         return 0;
     }
-    int length = stackData[stack * 5000];
+    int length = stackData[stack * 1000];
     if (length <= 0) {
         return 0;
     }
-    return stackData[stack * 5000 + length];
+    return stackData[stack * 1000 + length];
 }
 
 char str[] = "5+6*(3+2)-1";

@@ -49,7 +49,8 @@ class PYVisitor(CVisitor):
                     return function + '(' + ', '.join(self.visit(ctx.argumentExpressionList())) + ')'
                 elif function == 'printf':
                     args = self.visit(ctx.argumentExpressionList())
-                    return 'print(' + ' % '.join([('(%s)' % i)if args.index(i) != 0 else i for i in args ]) + ', end = \'\')'
+                    if len(args) != 0:
+                        return 'print(' + args[0] + '% (' + ', '.join([('(%s)' % i) if args.index(i) != 0 else i for i in args[1:]]) + '), end = \'\')'
                 elif ctx.argumentExpressionList():
                     return function + '(' + ', '.join(self.visit(ctx.argumentExpressionList())) + ')'
                 else:
@@ -356,7 +357,7 @@ class PYVisitor(CVisitor):
     def visitCompilationUnit(self, ctx: CParser.CompilationUnitContext):
         ans = [self.visit(i) for i in ctx.children[:-1]]
         ans = [x for x in ans if x]
-        return '\n'.join(ans) + '\n\nif __name__ == \'__main__\': \n\tmain()\n'
+        return '\n'.join(ans) + '\n\n\nif __name__ == \'__main__\': \n\tmain()\n'
 
     def visitFunctionDefinition(self, ctx: CParser.FunctionDefinitionContext):
         function_defination = 'def '

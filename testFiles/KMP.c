@@ -1,70 +1,56 @@
-char s[] = "abcdefgabdef";
-char t[] = "ab";
+char string1[] = "1234567890";
+char string2[] = "678";
 
-int next[1000];
+int next[200];
 
-void computeNext()
-{
-    int length_t = strlen(t);
-    int index_t = 0;
-    next[index_t] = 0;
-    for(int index_moving = 1; index_moving < length_t + 1; ++index_moving)
+void KMP(){
+    int length1 = strlen(string1);
+    int length2 = strlen(string2);
+    int j = 0;
+    for(int i = 0; i < 200; i++){
+        next[i] = 0;
+    }
+    int i = 1;
+    for(i = 1; i < length2; i++)
     {
-        while(index_moving < length_t && index_t < length_t && t[index_moving] == t[index_t])
+        while(i < length2 && j < length2 && string2[i] == string2[j])
         {
-            ++index_t;
-            ++index_moving;
-            next[index_moving] = index_t;
+            i++;
+            j++;
+            next[i] = j;
         }
-        if(index_moving == length_t)
+        while(j > 0 && string2[i] != string2[j])
         {
-            next[index_moving] = index_t;
-            break;
+            j = next[j];
         }
-        if(t[index_moving] != t[index_t])
+        next[i] = j;
+    }
+    next[i] = j;
+    j = 0;
+    int temp = 0;
+    while(temp < length1)
+    {
+        while(temp < length1 && j < length2 && string1[temp] == string2[j])
         {
-            while(index_t != 0 && t[index_moving] != t[index_t])
-            {
-                index_t = next[index_t];
-            }
-            next[index_moving] = index_t;
+            ++j;
+            ++temp;
+        }
+        if(j == length2)
+        {
+            printf("from %d to %d\n", temp - length2, temp - length2 + length2);
+            j = next[j];
             continue;
         }
+        while(temp < length1 && j != 0 && string1[temp] != string2[j])
+        {
+            j = next[j];
+        }
+        ++temp;
     }
 }
 
 int main()
 {
-    computeNext();
-    int length_s = strlen(s);
-    int length_t = strlen(t);
-    if(length_t == 0)
-    {
-        printf("empty template string!\n");
-        return 0;
-    }
-    int index_t = 0;
-    for(int index_s = 0; index_s < length_s; )
-    {
-        while(index_s < length_s && index_t < length_t && s[index_s] == t[index_t])
-        {
-            ++index_t;
-            ++index_s;
-        }
-        if(index_t == length_t)
-        {
-            printf("%d\n", index_s - length_t);
-            index_t = next[index_t];
-            continue;
-        }
-        if(index_s == length_s)
-        {
-            break;
-        }
-        while(index_t != 0 && s[index_s] != t[index_t])
-        {
-            index_t = next[index_t];
-        }
-        ++index_s;
-    }
+    KMP();
+    return 0;
 }
