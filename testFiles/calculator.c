@@ -1,7 +1,7 @@
 int data[1000 * 2];
 int count[1];
 int orderList[4] = {0, 1, 2, 3};
-char calStr[] = "1+(5-2)*4/(2+1)";
+char calStr[] = "1+3*6/2-2";
 
 int init() {
     int ans = count[0];
@@ -83,7 +83,7 @@ int main() {
     int tmp = 0;
     int j;
     int strlen_t = strlen(calStr);
-
+    printf("%s = ", calStr);
     while (ifEmpty(operator) == 0 || i < strlen_t) {
         if(i < strlen_t) {
             if(calStr[i] >= '0' && calStr[i] <= '9') {

@@ -233,7 +233,6 @@ class PYVisitor(CVisitor):
         return self.visitChildren(ctx)
 
     def visitParameterTypeList(self, ctx: CParser.ParameterTypeListContext):
-        # return ', '.join([self.visitParameterDeclaration2(x) for x in ctx.parameterList()])
         return self.visit(ctx.parameterList())
 
     def visitParameterList(self, ctx: CParser.ParameterListContext):
