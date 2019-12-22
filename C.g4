@@ -41,8 +41,6 @@ postfixExpression
     :   primaryExpression
     |   postfixExpression '[' expression ']'
     |   postfixExpression '(' argumentExpressionList? ')'
-    |   postfixExpression '.' Identifier
-    |   postfixExpression '->' Identifier
     |   postfixExpression '++'
     |   postfixExpression '--'
     |   '(' typeName ')' '{' initializerList '}'
@@ -154,8 +152,8 @@ constantExpression
 
 declarator
     :   Identifier # pureIdentifier
-    |   Identifier '[' assignmentExpression? ']'       # arrayIdentifier
-    |   Identifier '(' parameterTypeList? ')' /* function definition or function declaration */    # functionDefinitionOrDeclaration
+    |   Identifier '[' assignmentExpression? ']' # arrayIdentifier
+    |   Identifier '(' parameterTypeList? ')' # functionDefinitionOrDeclaration
     ;
 
 declaration
@@ -181,13 +179,11 @@ typeSpecifier
     |   'float'
     |   'double'
     |   'signed'
-    |   'unsigned')
-    |   enumSpecifier
-    |   typeSpecifier pointer
+    |   'unsigned') pointer?
     ;
 
 typeName
-    :   ('int' | 'float')
+    :   ('int' |'float')
     ;
 
 enumSpecifier
@@ -215,7 +211,7 @@ pointer
     ;
 
 parameterTypeList
-    :   parameterList ',' '...'
+    :   parameterList (',' '...')?
     ;
 
 parameterList

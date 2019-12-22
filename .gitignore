@@ -1,0 +1,13 @@
+__pycache__/
+gen/
+.idea/
+.DS_Store
+.antlr
+output/
+test.c
+C.interp
+C.tokens
+CParser.py
+CLexer.*
+CtoPY.py
+test.py
