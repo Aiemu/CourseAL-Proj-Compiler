@@ -120,17 +120,7 @@ int main() {
                     i = i + 1;
                     continue;
                 }
-                int ok = 0;
-                if (ifEmpty(operator) != 1 && calStr[i] == '\0') {
-                    ok = 1;
-                }
-                if (calStr[i] == ')' && getStackTop(operator) != '(') {
-                    ok = 1;
-                }
-                if (order(calStr[i]) <= order(getStackTop(operator))) {
-                    ok = 1;
-                }
-                if (ok) {
+                if ((ifEmpty(operator) != 1 && calStr[i] == '\0') || (calStr[i] == ')' && getStackTop(operator) != '(') || (order(calStr[i]) <= order(getStackTop(operator)))) {
                     int operatorNow = pop(operator);
                     if (operatorNow ==  '+') {
                         push(num, pop(num) + pop(num));
@@ -150,11 +140,7 @@ int main() {
             }
         }
         else {
-            int ok = 0;
             if (ifEmpty(operator) == 0 && i == strlen_t) {
-                ok = 1;
-            }
-            if (ok) {
                 int operatorNow = pop(operator);
                 if (operatorNow ==  '+') {
                     push(num, pop(num) + pop(num));
