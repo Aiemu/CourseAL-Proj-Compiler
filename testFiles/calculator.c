@@ -1,19 +1,23 @@
-int stackData[1000 * 2];
-int stackNo[1];
-int initStack() {
-    int ans = stackNo[0];
-    stackNo[0] = stackNo[0] + 1;
-    stackData[1000 * ans] = 0;
+int data[1000 * 2];
+int count[1];
+char calStr[] = "1+(5-2)*4/(2+1)";
+
+int init() {
+    int ans = count[0];
+    count[0] = count[0] + 1;
+    data[1000 * ans] = 0;
     return ans;
 }
+
 void push(int stack, int tar) {
-    int length = stackData[stack * 1000];
+    int len = data[stack * 1000];
     if (stack >= 2 || stack < 0) {
         return;
     }
-    stackData[stack * 1000 + length + 1] = tar;
-    stackData[stack * 1000] = length + 1;
+    data[stack * 1000 + len + 1] = tar;
+    data[stack * 1000] = len + 1;
 }
+
 int pop(int stack) {
     if (stack >= 2) {
         return 0;
@@ -21,46 +25,44 @@ int pop(int stack) {
     if (stack < 0) {
         return 0;
     }
-    int length = stackData[stack * 1000];
-    if (length <= 0) {
+    int len = data[stack * 1000];
+    if (len <= 0) {
         return 0;
     }
-    stackData[stack * 1000] = length - 1;
-    return stackData[stack * 1000 + length];
+    data[stack * 1000] = len - 1;
+    return data[stack * 1000 + len];
 }
-int stackEmpty(int stack) {
+
+int ifEmpty(int stack) {
     if (stack >= 2) {
         return 1;
     }
     if (stack < 0) {
         return 1;
     }
-    int length = stackData[stack * 1000];
-    if (length == 0) {
+    int len = data[stack * 1000];
+    if (len == 0) {
         return 1;
     }
     return 0;
 }
-int getTop(int stack) {
+
+int getStackTop(int stack) {
     if (stack >= 2) {
         return 0;
     }
     if (stack < 0) {
         return 0;
     }
-    int length = stackData[stack * 1000];
-    if (length <= 0) {
+    int len = data[stack * 1000];
+    if (len <= 0) {
         return 0;
     }
-    return stackData[stack * 1000 + length];
+    return data[stack * 1000 + len];
 }
 
-char str[] = "5+6*(3+2)-1";
-
-int Priority(int s)
-{
-    if (s == '(')
-    {
+int order(int s) {
+    if (s == '(') {
         return 3;
     }
     if (s == '*' || s == '/') {
@@ -72,104 +74,98 @@ int Priority(int s)
     return 0;
 }
 
-int main()
-{
-    stackNo[0] = 0;
-    int num = initStack();
-    int opt = initStack();
+int main() {
+    count[0] = 0;
+    int num = init();
+    int operator = init();
     int i = 0;
     int tmp = 0;
     int j;
-    int strlen_t = strlen(str);
+    int strlen_t = strlen(calStr);
 
-    while (stackEmpty(opt) != 1 || i < strlen_t)
-    {
-        if(i < strlen_t){
+    while (ifEmpty(operator) != 1 || i < strlen_t) {
+        if(i < strlen_t) {
+            if(calStr[i] >= '0' && calStr[i] <= '9') {
+                tmp = tmp * 10 + (int)(calStr[i]);
+                i = i + 1;
+                if (i >= strlen_t) {
+                    push(num, tmp);
+                    tmp = 0;
+                }
+                else {
 
-        if(str[i] >= '0' && str[i] <= '9')
-        {
-            tmp = tmp * 10 + (int)(str[i]);
-            i = i + 1;
-            if (i >= strlen_t){
-                push(num, tmp);
-                tmp = 0;
+                if(calStr[i] >= '0' && calStr[i] <= '9') {
+                    continue;
+                }
+                else {
+                    push(num, tmp);
+                    tmp = 0;
+                }
+                }
             }
             else {
-
-            if(str[i] >= '0' && str[i] <= '9') {
-                continue;
-            }
-            else {
-                push(num, tmp);
-                tmp = 0;
-            }
-            }
-        }
-        else
-        {
-            if(stackEmpty(opt) || Priority(str[i]) > Priority(getTop(opt)))
-            {
-                push(opt, str[i]);
-                i = i + 1;
-                continue;
-            }
-            if (getTop(opt) == '(' && str[i] != ')') {
-                push(opt, str[i]);
-                i = i + 1;
-                continue;
-            }
-            if(getTop(opt) == '(' && str[i] == ')')
-            {
-                pop(opt);
-                i = i + 1;
-                continue;
-            }
-            int ok = 0;
-            if (stackEmpty(opt) != 1 && str[i] == '\0') {
-                ok = 1;
-            }
-            if(str[i] == ')' && getTop(opt) != '(') {
-                ok = 1;
-            }
-            if (Priority(str[i]) <= Priority(getTop(opt))) {
-                ok = 1;
-            }
-            if (ok) {
-                int opt_now = pop(opt);
-                if (opt_now ==  '+') {
-                    push(num, pop(num) + pop(num));
+                if(ifEmpty(operator) || order(calStr[i]) > order(getStackTop(operator))) {
+                    push(operator, calStr[i]);
+                    i = i + 1;
+                    continue;
                 }
-                if (opt_now ==  '-') {
-                    j = pop(num);
-                    push(num, pop(num) - j);
+                if (getStackTop(operator) == '(' && calStr[i] != ')') {
+                    push(operator, calStr[i]);
+                    i = i + 1;
+                    continue;
                 }
-                if (opt_now ==  '*') {
-                    push(num, pop(num) * pop(num));
+                if(getStackTop(operator) == '(' && calStr[i] == ')') {
+                    pop(operator);
+                    i = i + 1;
+                    continue;
                 }
-                if (opt_now ==  '/') {
-                    j = pop(num);
-                    push(num, pop(num) / j);
+                int ok = 0;
+                if (ifEmpty(operator) != 1 && calStr[i] == '\0') {
+                    ok = 1;
+                }
+                if(calStr[i] == ')' && getStackTop(operator) != '(') {
+                    ok = 1;
+                }
+                if (order(calStr[i]) <= order(getStackTop(operator))) {
+                    ok = 1;
+                }
+                if (ok) {
+                    int operatorNow = pop(operator);
+                    if (operatorNow ==  '+') {
+                        push(num, pop(num) + pop(num));
+                    }
+                    if (operatorNow ==  '-') {
+                        j = pop(num);
+                        push(num, pop(num) - j);
+                    }
+                    if (operatorNow ==  '*') {
+                        push(num, pop(num) * pop(num));
+                    }
+                    if (operatorNow ==  '/') {
+                        j = pop(num);
+                        push(num, pop(num) / j);
+                    }
                 }
             }
         }
-        }else{
+        else {
             int ok = 0;
-            if (stackEmpty(opt) != 1 && i == strlen_t) {
+            if (ifEmpty(operator) != 1 && i == strlen_t) {
                 ok = 1;
             }
             if (ok) {
-                int opt_now = pop(opt);
-                if (opt_now ==  '+') {
+                int operatorNow = pop(operator);
+                if (operatorNow ==  '+') {
                     push(num, pop(num) + pop(num));
                 }
-                if (opt_now ==  '-') {
+                if (operatorNow ==  '-') {
                     j = pop(num);
                     push(num, pop(num) - j);
                 }
-                if (opt_now ==  '*') {
+                if (operatorNow ==  '*') {
                     push(num, pop(num) * pop(num));
                 }
-                if (opt_now ==  '/') {
+                if (operatorNow ==  '/') {
                     j = pop(num);
                     push(num, pop(num) / j);
                 }
