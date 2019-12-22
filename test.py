@@ -1,6 +1,6 @@
 s = "abcdefgabdef"
 t = "ab"
-next = [0 * 1000]
+next = [0] * 1000
 def computeNext():
 	length_t = len(t)
 	index_t = 0
@@ -18,6 +18,7 @@ def computeNext():
 			while index_t != 0 and t[index_moving] != t[index_t]:
 				index_t=next[index_t]
 			next[index_moving]=index_t
+			index_moving += 1
 			continue
 		index_moving += 1
 def main():
